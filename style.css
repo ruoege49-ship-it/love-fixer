@@ -590,3 +590,32 @@ body.lf-night-bw .lf-sheet .text_pole, body.lf-night-sea .lf-sheet .text_pole, b
 .lf-pbody .lf-search { width: 100%; margin: 0; box-sizing: border-box; }
 .lf-term .lf-kind { font-style: normal; font-size: 10px; margin-left: 8px; padding: 1px 7px; border-radius: 999px; border: 1px dashed var(--lf-dash); color: var(--lf-ink-soft); }
 #lf_gk { margin-top: -2px; }
+.lf-gd-links { gap: 6px; }
+.lf-gd-link { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+.lf-gd-link + .lf-gd-link { border-top: 1px dashed color-mix(in srgb, var(--lf-dash) 60%, transparent); }
+.lf-gd-link.on { background: var(--lf-paper-user); border-radius: 10px; padding: 8px; }
+.lf-gd-link code { font-size: 11px; word-break: break-all; opacity: .75; background: none; padding: 0; }
+.lf-gd-link b em { font-style: normal; font-size: 10px; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--lf-mist); color: #fff; }
+.lf-gd-lb { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lf-gd-lb .lf-btn { min-height: 30px; padding: 4px 12px; font-size: 12px; }
+.lf-wmods { display: flex; flex-wrap: wrap; gap: 6px; max-height: 210px; overflow-y: auto; scrollbar-width: none; }
+.lf-wmods::-webkit-scrollbar { display: none; }
+.lf-wmods .lf-chip { font-size: 11px; padding: 4px 10px; }
+.lf-form label .lf-fetch-models { flex: none; min-height: 30px; padding: 3px 12px; font-size: 12px; }
+.lf-hmods { margin: -2px 0 4px; }
+.lf-chip.lf-cheap { border-style: solid; border-color: var(--lf-mist); }
+.lf-wfetch { align-self: flex-start; min-height: 30px !important; padding: 3px 12px !important; font-size: 12px !important; }
+.lf-msearch { width: 100%; margin: 0 0 4px !important; box-sizing: border-box; font-size: 12px !important; padding: 4px 10px !important; }
+
+/* 讲解开着时，聊天里的网页框（前端卡、开场白主页）暂时不接收点击，点击交给讲解 */
+body.lf-helper-on #chat iframe { pointer-events: none !important; }
+
+/* 顶栏放不下时的小悬浮按钮 */
+#lf_start_btn.lf-float {
+    position: fixed; left: 6px; right: auto; top: 38%; bottom: auto; z-index: 3000;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--lf-paper2); color: var(--lf-ink2); border: 1.5px solid var(--lf-ink2);
+    box-shadow: 0 3px 0 rgba(26, 22, 18, .22); opacity: .9;
+}
+#lf_start_btn.lf-float .drawer-icon { font-size: 17px; }
+#lf_start_btn.lf-float .lf-dot { top: 2px; right: 2px; }

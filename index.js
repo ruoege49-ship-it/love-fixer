@@ -1,4 +1,4 @@
-// Love 修正机 · if love · 酒馆扩展版 1.1.0
+// Love 修正机 · if love · 酒馆扩展版 1.1.1
 import * as ST from '/script.js';
 import * as OAI from '/scripts/openai.js';
 import * as PER from '/scripts/personas.js';
@@ -8,7 +8,7 @@ if (window.__loveFixer || document.getElementById('lf_module')) {
 } else {
 window.__loveFixer = 'extension';
 const MOD = 'love_fixer';
-const VER = '1.1.0';
+const VER = '1.1.1';
 const ctx = () => SillyTavern.getContext();
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -103,7 +103,7 @@ const CSS_FIX = {
     ui_msg_buttons: `.mes_buttons .mes_translate,.mes_buttons .sd_message_gen,.mes_buttons .mes_narrate,.mes_buttons .mes_embed,.mes_buttons .mes_create_bookmark,.mes_buttons .mes_create_branch{display:none!important}`,
     perf_no_blur: `*,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;animation-duration:0s!important;transition-duration:0s!important}`,
     mob_no_zoom: `html,body{touch-action:manipulation}`,
-    mob_full_panel: `@media (max-width:1000px){#right-nav-panel,#left-nav-panel,#top-settings-holder .drawer-content{width:100dvw!important;max-width:100dvw!important;left:0!important;right:0!important;margin:0!important}}`,
+    mob_full_panel: `@media (max-width:1000px){#right-nav-panel,#left-nav-panel{width:100dvw!important;max-width:100dvw!important;left:0!important;right:0!important;margin:0!important}}`,
     mob_big_tap: `@media (max-width:1000px){.mes_buttons .mes_button,.extraMesButtons .mes_button{padding:8px!important;font-size:1.1em}#leftSendForm>*,#rightSendForm>*{min-width:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center}}`,
 };
 
@@ -113,7 +113,7 @@ const DEF = {
     preset: '', novice: false, fixes: {}, limit: 30, hidden: [], font: '', fontCustom: '', fontSize: 0,
     orig: {}, charAvatars: {}, builtinsTouched: false,
     undo: [], favs: [], pickTab: 'all', look: { mode: 'day', night: 'bw' },
-    helper: { mode: 'st', protocol: 'openai', url: '', model: '', desk: '', attach: { preset: true, regex: true, ext: false } },
+    helper: { mode: 'st', protocol: 'openai', url: '', model: '', desk: '', attach: { preset: true, regex: true, ext: false, msgs: false } },
 };
 
 function S() {
@@ -323,18 +323,22 @@ function panelHtml(kind = 'ext') {
                 <div class="lf-own"${h.mode === 'own' ? '' : ' hidden'}>
                     <label>格式<select class="text_pole lf-h" data-h="protocol"><option value="openai"${h.protocol === 'openai' ? ' selected' : ''}>OpenAI 兼容</option><option value="anthropic"${h.protocol === 'anthropic' ? ' selected' : ''}>Anthropic</option></select></label>
                     <label>地址<input class="text_pole lf-h" data-h="url" value="${esc(h.url)}" placeholder="https://你的接口/v1"></label>
-                    <label>模型<input class="text_pole lf-h" data-h="model" value="${esc(h.model)}" placeholder="填模型名"></label>
-                    <label>密钥<input class="text_pole lf-key" type="password" value="${esc(localStorage.getItem('lf_helper_key') || '')}" placeholder="保存在本机，用于请求所选接口"></label>
+                    <label>模型<input class="text_pole lf-h" data-h="model" value="${esc(h.model)}" placeholder="点“拉取”选，或者自己填"><button class="lf-btn lf-fetch-models">拉取</button></label>
+                    <div class="lf-wmods lf-hmods"></div>
+                    <label>密钥<input class="text_pole lf-key" type="password" value="${esc(localStorage.getItem('lf_helper_key') || '')}" placeholder="只存在这台设备的浏览器里"></label>
                 </div>
                 <label>答疑链接<input class="text_pole lf-h" data-h="desk" value="${esc(h.desk)}" placeholder="「新手答疑」频道链接，填了就能一键跳过去"></label>
                 <div class="lf-attach"><span>提问时附带</span>
                     <label><input type="checkbox" data-att="preset"${h.attach.preset ? ' checked' : ''}>预设结构</label>
                     <label><input type="checkbox" data-att="regex"${h.attach.regex ? ' checked' : ''}>正则列表</label>
                     <label><input type="checkbox" data-att="ext"${h.attach.ext ? ' checked' : ''}>已装扩展</label>
+                    <label><input type="checkbox" data-att="msgs"${h.attach.msgs ? ' checked' : ''}>看屏幕时带上最后两条聊天原文</label>
+                    <small class="lf-muted">聊天原文默认不带：成人内容发给小助手，它的模型也会被审查、跟着截断。只告诉它消息多长、像不像被截断、有没有露代码。</small>
                 </div>
             </div>
         </div>
     </div>
+    ${isExtVersion() ? '' : `<div class="lf-grp lf-solo"><div class="lf-row" data-text="扩展版 换成扩展 安装"><div class="lf-row-main"><div class="lf-row-t"><b>换成扩展版</b><small>现在用的是酒馆助手脚本版。扩展版功能一样，不用靠酒馆助手，更新也方便</small></div><button class="lf-btn lf-to-ext">去装</button></div></div></div>`}
     ${kind === 'ext' ? `<div class="lf-actions">
         <button class="lf-btn lf-open-hub"><i class="fa-solid fa-table-cells-large"></i> 全部功能</button>
         <button class="lf-btn lf-open-check"><i class="fa-solid fa-stethoscope"></i> 帮我查问题</button>
@@ -454,6 +458,23 @@ function bindPanel(body) {
             const closed = FIXES.filter((f) => !on(f.id) && before.has(f.id)).map((f) => f.n);
             say(`换成「${name}」了。${opened.length ? `<br>打开：${opened.join('、')}` : ''}${closed.length ? `<br>关掉：${closed.join('、')}` : ''}${!opened.length && !closed.length ? '没有要改的。' : ''}`, 'success'); return;
         }
+        const fm = t.closest('.lf-fetch-models');
+        if (fm) {
+            e.preventDefault();
+            const box = body.querySelector('.lf-hmods');
+            const key = (body.querySelector('.lf-key')?.value || localStorage.getItem('lf_helper_key') || '').trim();
+            box.innerHTML = '<small class="lf-wdim">拉取中…</small>';
+            try { box.innerHTML = '<small class="lf-wdim">点一个就选好（标出来的是便宜的，小助手用它就够）：</small>' + modelChips(await fetchModels(S().helper, key), S().helper.model); }
+            catch (err) { box.innerHTML = `<small class="lf-wdim">${esc(err?.message || err)}</small>`; }
+            return;
+        }
+        const hm = t.closest('.lf-hmods [data-m]');
+        if (hm) {
+            S().helper.model = hm.dataset.m; save();
+            const inp = body.querySelector('.lf-h[data-h="model"]'); if (inp) inp.value = hm.dataset.m;
+            $$('.lf-hmods [data-m]', body).forEach((x) => x.classList.toggle('on', x === hm));
+            say(`小助手的模型 → ${hm.dataset.m}`, 'success'); return;
+        }
         if (t.closest('.lf-pick')) return startPick();
         if (t.closest('.lf-unhide')) { S().hidden = []; save(); applyCSS(); renderPanel(); say('点选隐藏的都恢复了'); return; }
         if (t.closest('.lf-apply-ext')) return applyBuiltins();
@@ -468,6 +489,7 @@ function bindPanel(body) {
         if (t.closest('.lf-open-wiz')) return openStart();
         if (t.closest('.lf-open-guide-ext')) return openGuide('ext');
         if (t.closest('.lf-open-guide-lang')) return openGuide('lang');
+        if (t.closest('.lf-to-ext')) { body.closest('.lf-mask')?.remove(); return openGuide('ext', 0, 'fixer'); }
     });
 }
 
@@ -1146,6 +1168,20 @@ function glossaryText() {
     return '黑话：\n' + GLOSSARY.filter(([t]) => !INTRO.has(t)).map(line).join('\n') + '\n\n介绍：\n' + GLOSSARY.filter(([t]) => INTRO.has(t)).map(line).join('\n');
 }
 
+function explainMes(el) {
+    const id = Number(el.getAttribute('mesid'));
+    const isUser = el.getAttribute('is_user') === 'true';
+    const hidden = el.getAttribute('is_system') === 'true';
+    if (id === 0 && !isUser) {
+        return { title: '开场白', tags: ['0 楼'], html: '卡的第一条消息，每个新聊天都从这里开始。很多卡有好几个开场白，在这条消息上<b>左右翻</b>就能换（只有还没回复前能翻）。<br>开场白是网页界面的，叫“开场白主页”，要装酒馆助手才显示；切换开场白后露出代码，去提示词模板先“重置”，再取消勾选“先处理原始内容”。', slang: '首条、0 楼', topic: '开场白' };
+    }
+    return {
+        title: isUser ? `你发的第 ${id} 楼` : `AI 回复 · 第 ${id} 楼`, tags: [hidden ? '已隐藏，不发给 AI' : '会发给 AI'],
+        html: isUser ? '你发的消息。点小铅笔能改，改完 AI 之后按改过的接。' : 'AI 的回复。不满意就在最后一条上往右翻重新抽一条；点小铅笔能直接改；右上角“…”里有更多按钮，比如看这次 AI 收到了什么。',
+        topic: isUser ? '我发的消息' : 'AI 回复',
+    };
+}
+
 const SPOTS = [
     { sel: '#completion_prompt_manager_list .completion_prompt_manager_prompt[data-pm-identifier]', get: explainPrompt },
     { sel: '.world_entry', get: explainWI },
@@ -1189,6 +1225,7 @@ const SPOTS = [
     { sel: '.mes_edit_copy', t: '复制这条', x: '在下面复制出一条一模一样的消息。' },
     { sel: '.mes_hide, .mes_unhide', s: '隐藏楼层', t: '隐藏 / 取消隐藏', x: '隐藏后这条还在，但不再发给 AI。做完大总结后用它（或 /hide 命令）把旧楼藏起来。' },
     { sel: '.mes_edit', s: '改楼', t: '编辑消息', x: '小铅笔：点了就能直接改这一楼的内容，改完点 ✓ 保存。AI 之后会按改过的往下接，比重新抽卡更能把剧情掰回来。' },
+    { sel: '#chat .mes[mesid]', get: explainMes },
     { sel: ['.range-block', 'label', 'input[id]', 'select[id]', 'textarea[id]', '.menu_button[title]'].map((x) => '.drawer-content ' + x).join(', '), get: explainControl },
 ];
 
@@ -1335,7 +1372,7 @@ function buildSystem() {
         + '酒馆聊天补全的消息拼接顺序：预设前置条目 → 世界书(角色定义之前) → 角色描述/性格/场景/user设定 → 世界书(角色定义之后) → 示例消息 → 聊天历史 → 聊天历史之后的条目(后置指令、以AI身份发送的预填充)。深度条目插在聊天历史里，从最新一条消息往回数：D0 在所有消息之后，D1 在最新一条消息之前，D2 在倒数第二条消息之前，以此类推。';
     s += '\n\n【酒馆社区常用黑话和功能介绍】玩家可能用这些说法提问，你也可以用它们回答：\n' + glossaryText();
     s += '\n\n【常见问题速查】429：撞车（PVP），等一会儿或换渠道；524：把流式传输换成非流式；502：上游或网络问题；400：预设和模型不匹配，换预设；爆代码（聊天里露出代码）：去社区扩展区下载酒馆助手和提示词模板；都装了、切换开场白时爆代码：提示词模板里先点“重置”，再取消勾选“先处理原始内容”。提示词后处理：预设没要求就选不带工具的“严格”。流式：真流生成多少发多少（开流式）；非流写完一次性发（关流式）；假流是中转发空消息防超时、模型用非流写（开流式）；哈基米真流有实时审查容易截断，换非流或假流。更新角色卡：原本的世界书要先重命名或删掉，酒馆检测到重名世界书就不更新；更新办法：角色卡界面“更多 → 更新”，或直接导入新卡再导入存档，或酒馆助手 → 脚本库 → 内置脚本 →“更新角色卡时更新世界书”（会覆盖世界书、找不回旧版，自己改过的先备份）。不要用 WB 指代世界书，就叫世界书。预填：Gemini 3.1 Pro 和 3.6 Flash 起的哈基米（3.5 Flash 之后出的）都不适配预填，要关掉预填条目；3.5 Flash 本身还能用预填。双惩罚（频率惩罚、存在惩罚）：Gemini 2.5 以后的模型不支持，放 0。Gemini 3.x、4.x 的通用模型还会忽略温度、Top P、Top K。写人设、卡、世界书可以用 XML 标签分段，不要滥用 Markdown（AI 会学着在回复里用标题和列表）。你解决不了的问题，让玩家去社区的「新手答疑」频道问（先看「新手入门」，问完不会去「新手开帖」）。';
-    s += '\n\n【看屏幕】玩家消息里如果带了【我的屏幕状态】，先根据它判断问题出在哪，直接给具体操作，一步一步说。只有在信息不够、或者你也不确定的时候，才老实说解决不了，让玩家点小助手里的“去答疑提问”，那里能帮他整理好提问再去社区的「新手答疑」频道。不要瞎猜。';
+    s += '\n\n【看屏幕】屏幕状态默认不带聊天原文，只有消息长度、是否像被截断、是否露代码；需要看原文时，让玩家自己粘贴一小段不敏感的。玩家消息里如果带了【我的屏幕状态】，先根据它判断问题出在哪，直接给具体操作，一步一步说。只有在信息不够、或者你也不确定的时候，才老实说解决不了，让玩家点小助手里的“去答疑提问”，那里能帮他整理好提问再去社区的「新手答疑」频道。不要瞎猜。';
     if (a.preset) s += '\n\n【玩家当前预设结构（已启用条目，按发送顺序）】\n' + presetSummary();
     if (a.regex) s += '\n\n【玩家的正则】\n' + regexSummary();
     if (a.ext) s += '\n\n【玩家已装的扩展】\n' + extSummary();
@@ -1356,6 +1393,43 @@ async function askAI(log = askLog, extraSys = '') {
     return callOwn(h, localStorage.getItem('lf_helper_key') || '', sys, msgs, 1500);
 }
 
+// 从小助手自己的接口拉模型列表（OpenAI 兼容：/models；Anthropic：/v1/models）
+async function fetchModels(h, key) {
+    const base = String(h.url || '').trim().replace(/\/+$/, '').replace(/\/(chat\/completions|messages)$/, '');
+    if (!base) throw new Error('先填地址');
+    if (!key) throw new Error('先填密钥');
+    let url; let headers;
+    if (h.protocol === 'anthropic') {
+        url = /\/v1$/.test(base) ? base + '/models' : base + '/v1/models';
+        headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' };
+    } else {
+        url = /\/(v\d+\w*|openai)$/.test(base) ? base + '/models' : base + '/v1/models';
+        headers = { authorization: 'Bearer ' + key };
+    }
+    let r;
+    try { r = await fetch(url, { headers }); } catch { throw new Error('连不上这个地址，或者这个渠道不让网页直接拉列表，只能手输'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j?.error?.message || `接口返回 ${r.status}`);
+    const arr = Array.isArray(j) ? j : j.data || j.models || [];
+    const ids = [...new Set(arr.map((x) => (typeof x === 'string' ? x : x.id || x.name || '')).map((x) => String(x).replace(/^models\//, '')).filter(Boolean))];
+    if (!ids.length) throw new Error('渠道没给模型列表，只能手输');
+    return ids.sort((a, b) => a.localeCompare(b));
+}
+// 模型列表里的搜索框：只显示名字里带关键词的
+document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (!t.classList?.contains('lf-msearch')) return;
+    const k = t.value.trim().toLowerCase();
+    $$('[data-m]', t.parentElement).forEach((c) => { c.style.display = !k || c.dataset.m.toLowerCase().includes(k) ? '' : 'none'; });
+});
+const isCheap = (v) => /(?:^|[-_/.:])(mini|nano|lite|small)\b|flash|haiku|deepseek-chat/i.test(v);
+function modelChips(ids, cur = '') {
+    const cheap = ids.filter(isCheap);
+    const rest = ids.filter((v) => !isCheap(v));
+    return `<input class="text_pole lf-msearch" placeholder="一共 ${ids.length} 个模型，搜一下">`
+        + [...cheap, ...rest].map((v) => `<span class="lf-chip${v === cur ? ' on' : ''}${isCheap(v) ? ' lf-cheap' : ''}" data-m="${esc(v)}">${esc(v)}</span>`).join('');
+}
+
 async function callOwn(h, key, sys, msgs, max) {
     const base = (h.url || '').trim().replace(/\/+$/, '');
     if (!base || !h.model) throw new Error('先在修正机的小助手里填好地址和模型');
@@ -1370,7 +1444,8 @@ async function callOwn(h, key, sys, msgs, max) {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + key }, body: JSON.stringify({ model: h.model, max_tokens: max, messages: [{ role: 'system', content: sys }, ...msgs] }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j?.error?.message || `接口返回 ${r.status}`);
-    return String(j.choices?.[0]?.message?.content || '').trim();
+    const m = j.choices?.[0]?.message || {};
+    return String(m.content || '').trim() || (m.reasoning_content ? '' : String(j.choices?.[0]?.text || '').trim());
 }
 
 // 中转 / 反代地址：答疑时要看，不算隐私（密钥才是）
@@ -1401,13 +1476,16 @@ function screenSnapshot() {
     if (toasts.length) L.push(`屏幕上的提示：${toasts.join(' / ')}`);
     L.push(`局部正则允许：${allowToggle('regex_scoped_toggle').on ? '开' : '关'}；预设正则允许：${allowToggle('regex_preset_toggle').on ? '开' : '关'}`);
     L.push(`酒馆助手：${findInline(/酒馆助手|tavern ?helper|slash ?runner/i) ? '已装' : '没装'}；提示词模板：${findInline(/提示词模板|prompt ?template/i) ? '已装' : '没装'}`);
+    const withText = !!S().helper.attach.msgs;
     const last = $$('#chat .mes').slice(-2).map((m) => {
         const who = m.getAttribute('is_user') === 'true' ? '玩家' : 'AI';
-        const t = m.querySelector('.mes_text')?.textContent || '';
-        const leak = /<%|<(div|style|script|html)\b[^>]*>/i.test(t) ? '（露出了代码）' : '';
-        return `${who}${leak}：${snip(t, 260) || '（空）'}`;
+        const t = (m.querySelector('.mes_text')?.textContent || '').trim();
+        const leak = /<%|<(div|style|script|html)\b[^>]*>/i.test(t);
+        const cut = t && who === 'AI' && !/[。！？…」』”"’）)\]】~～*>》—.!?`]\s*$/.test(t);
+        const meta = `${who}：${t ? `约 ${t.length} 字` : '空白'}${leak ? '，露出了代码' : ''}${cut ? '，结尾像被截断' : ''}`;
+        return withText ? `${meta}\n  原文：${snip(t, 260) || '（空）'}` : meta;
     });
-    if (last.length) L.push(`最后两条消息：\n${last.join('\n')}`);
+    if (last.length) L.push(`最后两条消息${withText ? '' : '（只给情况，不带原文）'}：\n${last.join('\n')}`);
     if (recentErrs.length) L.push(`最近的报错：\n${recentErrs.slice(-8).join('\n')}`);
     try { const iss = runChecks().filter((x) => x.lv !== 'ok'); if (iss.length) L.push(`体检发现：\n${iss.map((x) => `· ${x.t}${x.x ? '：' + strip(x.x) : ''}`).join('\n')}`); } catch { /* */ }
     return L.join('\n');
@@ -1475,7 +1553,7 @@ function openAsk(prefill = '', auto = false) {
             q.value = '';
             renderAskLog(log);
             const wait = document.createElement('div'); wait.className = 'lf-bub ai lf-muted'; wait.textContent = '想一想…'; log.appendChild(wait); log.scrollTop = log.scrollHeight;
-            try { askLog.push({ role: 'assistant', content: (await askAI()) || '（空回复）' }); }
+            try { askLog.push({ role: 'assistant', content: (await askAI()) || '（小助手回了空白。多半是它用的模型被审查或截断了，常见于把成人内容发给它的时候。可以在优化设置的小助手里换一个审查松一点的模型，或者别把那段聊天原文发给它，只描述问题。）' }); }
             catch (err) { askLog.pop(); askLog.push({ role: 'user', content: text }); askLog.push({ role: 'assistant', content: '没问到：' + (err?.message || err), err: true }); }
             asking = false;
             renderAskLog(log);
@@ -1603,6 +1681,7 @@ function wizSay(text, acts) {
     d.innerHTML = (acts?.length ? `<div class="lf-wacts">${acts.map((a) => `<i class="fa-solid fa-check"></i> ${esc(a)}`).join('<br>')}</div>` : '') + `<div>${text}</div>`;
     log.appendChild(d);
     log.scrollTop = log.scrollHeight;
+    return d;
 }
 function wizMe(text) {
     const log = wiz.querySelector('.lf-wlog');
@@ -1739,7 +1818,7 @@ async function wizPick(k) {
     if (ch.src === 'custom') { const v = ppStrict(); if (v !== null && fixSet('#custom_prompt_post_processing', v, '提示词后处理 → 严格')) acts.push('提示词后处理 → 严格（不带工具；预设有别的要求就按预设改）'); }
     if (ch.url) {
         guide(q1(ch.url));
-        wizSay('中转要一个地址，就是对方给你的网址，结尾一般带 <b>/v1</b>。填进红框里，填好告诉我。', acts);
+        wizSay('中转要一个地址，就是对方给你的网址，结尾一般带 <b>/v1</b>。填进红框里，填好告诉我。<br><span class="lf-wdim">下面那个“输入模型名”先不用管，连上以后我把这个渠道能用的模型列出来，点一下就行。</span>', acts);
         wizOpts([['地址填好了', wizUrlCheck, 1], ['我没有地址', () => wizSay('中转和公益站的地址要找提供的人要。没有的话，选一个官方渠道也行。')]]);
         return;
     }
@@ -1759,7 +1838,7 @@ function wizUrlCheck() {
 function wizKey(acts) {
     const ch = wizCh;
     guide(q1(ch.key));
-    wizSay('密钥要你<b>自己填</b>，我只检查红框里是否已填写，不保存这处的密钥内容。填好点“我填好了”，我帮你点连接。<br><span class="lf-wdim">提醒：密钥相当于密码，别发给任何人；分享截图前把密钥遮住。中转地址不用遮，去答疑提问时别人要看它对不对。</span>', acts);
+    wizSay('密钥要你<b>自己填</b>，我不会碰，也看不到。填进红框里，填好点“我填好了”，我帮你点连接。<br><span class="lf-wdim">提醒：密钥相当于密码，别发给任何人；分享截图前把密钥遮住。中转地址不用遮，去答疑提问时别人要看它对不对。</span>', acts);
     wizOpts([['我填好了', wizConnect, 1], ['密钥去哪拿？', () => { wizSay(ch.where + '密钥相当于账号密码，别发给任何人。'); wizOpts([['我填好了', wizConnect, 1]]); }]]);
 }
 
@@ -1820,7 +1899,7 @@ function showErrHelp(raw) {
             const a = e.target.closest('button')?.dataset.a;
             if (a === 'ask') { errBox.style.display = 'none'; openAsk(`酒馆报错了：「${errBox.dataset.raw}」这是什么意思，我该怎么办？`, true); }
             if (a === 'close') errBox.style.display = 'none';
-            if (a === 'guide') { errBox.style.display = 'none'; openGuide('ext'); }
+            if (a === 'guide') { errBox.style.display = 'none'; openGuide('ext', 0, !findInline(/酒馆助手|tavern ?helper|slash ?runner/i) ? 'th' : 'pt'); }
             if (a === 'ptgo') { errBox.style.display = 'none'; openDrawer('#extensions-settings-button'); setTimeout(() => { const d = openInline(/提示词模板|prompt ?template/i); const b = d && $$('button, .menu_button, label, input', d).find((e) => /重置|reset/i.test(e.textContent || e.value || e.title || '')); guide(b || d?.querySelector('.inline-drawer-header') || null); if (d) setTimeout(() => guide(null), 9000); else say('没找到提示词模板，看看是不是没装', 'warning'); }, 450); }
             if (a === 'screen') openScreenCheck();
             if (a === 'askdesk') { errBox.style.display = 'none'; openAskDesk(); }
@@ -1837,24 +1916,73 @@ function showErrHelp(raw) {
 
 // 爆代码：卡的前端代码直接露在聊天里，通常是没装酒馆助手或提示词模板
 const leakWarned = new Set();
-function checkCodeLeak() {
-    if (!on('ui_err_explain')) return;
-    const chatId = ctx().getCurrentChatId?.() || '';
-    if (!chatId || leakWarned.has(chatId)) return;
-    const mes = $$('#chat .mes .mes_text').slice(-4);
-    const leaked = mes.some((m) => {
+const bootAt = Date.now();
+function leakNow() {
+    return $$('#chat .mes .mes_text').slice(-4).some((m) => {
         const t = m.textContent || '';
         if (/<%[=_-]?|getvar\(|setvar\(/.test(t)) return true;
         if (/<(div|style|script|html|body|span)\b[^>]*>/i.test(t) && /<\/(div|style|script|html|body|span)>/i.test(t)) return true;
         return [...m.querySelectorAll('pre code')].some((c) => /<(html|body|style|script|div)\b/i.test(c.textContent || '') && /(<!DOCTYPE|<html|<body|<style)/i.test(c.textContent || ''));
     });
-    if (!leaked) return;
-    const hasTH = !!findInline(/酒馆助手|tavern ?helper|slash ?runner/i);
-    const hasPT = !!findInline(/提示词模板|prompt ?template/i);
-    leakWarned.add(chatId);
-    if (hasTH && hasPT) { showErrHelp('__leakpt__'); return; }
-    const miss = [!hasTH && '酒馆助手', !hasPT && '提示词模板'].filter(Boolean).join('和');
-    showErrHelp(`__leak__${miss}`);
+}
+// 爆代码检测：加载中卡还没渲染完、扩展还没挂上时会误报，所以
+// 刚打开的前 10 秒不查、AI 正在写时不查，看到疑似爆代码后隔 5 秒再看一次，两次都在才提示
+let leakTimer = 0;
+function checkCodeLeak() {
+    if (!on('ui_err_explain')) return;
+    const chatId = ctx().getCurrentChatId?.() || '';
+    if (!chatId || leakWarned.has(chatId)) return;
+    clearTimeout(leakTimer);
+    const wait = Math.max(0, 10000 - (Date.now() - bootAt));
+    leakTimer = setTimeout(() => {
+        if (genStart || (ctx().getCurrentChatId?.() || '') !== chatId || !leakNow()) return;
+        leakTimer = setTimeout(() => {
+            if (genStart || (ctx().getCurrentChatId?.() || '') !== chatId || leakWarned.has(chatId) || !leakNow()) return;
+            const hasTH = !!findInline(/酒馆助手|tavern ?helper|slash ?runner/i);
+            const hasPT = !!findInline(/提示词模板|prompt ?template/i);
+            leakWarned.add(chatId);
+            if (hasTH && hasPT) { showErrHelp('__leakpt__'); return; }
+            const miss = [!hasTH && '酒馆助手', !hasPT && '提示词模板'].filter(Boolean).join('和');
+            showErrHelp(`__leak__${miss}`);
+        }, 5000);
+    }, wait);
+}
+
+// 模型不用手输：连上以后把渠道给的模型列出来，点一个就选好
+function wizModelPick(acts) {
+    const ch = wizCh;
+    const sel = q1(ch.model);
+    const opts = sel ? [...sel.options].map((o) => o.value).filter(Boolean) : [];
+    const setModel = (v) => {
+        if (sel) setVal(ch.model, v);
+        if (ch.src === 'custom' && q1('#custom_model_id')) setVal('#custom_model_id', v);
+    };
+    if (!opts.length) {
+        guide(q1('#custom_model_id') || sel);
+        wizSay('连上了，不过这个渠道<b>没把模型列表发过来</b>，只能手输：在红框里填对方给你的模型名（比如 gemini-2.5-pro、deepseek-chat），大小写要一样。', acts);
+        wizOpts([['填好了，下一步', wizHelperOffer, 1], ['重新拉一次模型', async () => { realClick(q1('#api_button_openai')); wizSay('重新连接中…'); await sleep(2500); wizModelPick(); }], ['换个渠道', wizHasApi]]);
+        return;
+    }
+    const want = ch.rec.map((r) => opts.find((v) => v.includes(r))).find(Boolean);
+    if (!sel.value && want) setModel(want);
+    guide(sel);
+    const d = wizSay(`连上了。这个渠道一共有 <b>${opts.length}</b> 个模型，<b>不用手输</b>，在下面点一个就行${sel.value ? `（现在选的是「${esc(sel.value)}」）` : ''}：
+        <div class="lf-wform"><input class="text_pole lf-wmq" placeholder="搜模型名，比如 gemini、claude、deepseek"><div class="lf-wmods"></div></div>`, acts);
+    const list = d.querySelector('.lf-wmods');
+    const draw = (k = '') => {
+        const hits = opts.filter((v) => !k || v.toLowerCase().includes(k.toLowerCase()));
+        list.innerHTML = hits.map((v) => `<span class="lf-chip${v === sel.value ? ' on' : ''}" data-m="${esc(v)}">${esc(v)}</span>`).join('') || '<small class="lf-wdim">没搜到</small>';
+    };
+    draw();
+    d.querySelector('.lf-wmq').addEventListener('input', (e) => draw(e.target.value.trim()));
+    list.addEventListener('click', (e) => {
+        const c = e.target.closest('[data-m]'); if (!c) return;
+        setModel(c.dataset.m);
+        $$('[data-m]', list).forEach((x) => x.classList.toggle('on', x === c));
+        wizSay(`模型 → <b>${esc(c.dataset.m)}</b>。不知道选哪个，就选名字里带 pro 的或者渠道推荐的；想省钱选带 flash、mini 的。`);
+        wizOpts([['下一步', wizHelperOffer, 1], ['再换一个', () => wizModelPick()]]);
+    });
+    wizOpts([['就用现在这个，下一步', wizHelperOffer, 1], ['换个渠道', wizHasApi]]);
 }
 
 async function wizConnect() {
@@ -1872,18 +2000,8 @@ async function wizConnect() {
             wizOpts([['再试一次', wizConnect, 1], ['换个渠道', wizHasApi]]);
             return;
         }
-        await sleep(600);
-        const sel = q1(ch.model);
-        let picked = sel?.value || '';
-        if (sel) {
-            const opts = [...sel.options].map((o) => o.value).filter(Boolean);
-            const want = ch.rec.map((r) => opts.find((v) => v.includes(r))).find(Boolean);
-            if (want && want !== sel.value) { setVal(ch.model, want); picked = want; }
-            if (!picked && opts[0]) { setVal(ch.model, opts[0]); picked = opts[0]; }
-            guide(sel);
-        }
-        wizSay(`连上了。模型现在是「${esc(picked || '默认')}」，想换就在红框里改。`, ['已点击“连接”', '状态：已连接']);
-        wizOpts([['下一步', wizHelperOffer, 1], ['换个渠道', wizHasApi]]);
+        await sleep(800);
+        wizModelPick(['已点击“连接”', '状态：已连接']);
     }, 800);
 }
 
@@ -1899,29 +2017,53 @@ function wizHelperOffer() {
 }
 
 function wizHelperSetup() {
-    const ch = wizCh;
+    const ch = wizCh || guessChannel();
     const h = { ...(ch.helper || { protocol: 'openai', url: '', model: '' }) };
     if (ch.src === 'custom' && !ch.fixedUrl) h.url = (q1(ch.url)?.value || '').trim();
     const needModel = !h.model;
-    wizSay(`我先帮你填好：格式 ${h.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI 兼容'}，地址 ${esc(h.url || '（待填）')}${h.model ? `，模型 ${esc(h.model)}` : ''}。<br>密钥还是要<b>你自己粘贴</b>一次（和刚才那个一样就行），会保存在本机浏览器，并用于请求选定的 AI 接口。
-        <div class="lf-wform"><input type="password" class="text_pole" id="lf_wk" placeholder="粘贴密钥">${needModel ? '<input class="text_pole" id="lf_wm" placeholder="填一个便宜的模型名，带 mini、flash、haiku 的一般都便宜">' : ''}</div>`);
-    wizOpts([['保存并测试', async () => {
-        const key = (document.getElementById('lf_wk')?.value || '').trim();
-        if (needModel) h.model = (document.getElementById('lf_wm')?.value || '').trim();
-        if (!key) { wizSay('密钥还没粘贴哦。'); return wizHelperSetup(); }
-        if (!h.model) { wizSay('模型名还没填。'); return wizHelperSetup(); }
+    // 渠道已经连上的话，把便宜的模型列出来点选，不用手输
+    const sel = q1(ch.model);
+    const all = sel ? [...sel.options].map((o) => o.value).filter(Boolean) : [];
+
+    const d = wizSay(`我先帮你填好：格式 ${h.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI 兼容'}，地址 ${esc(h.url || '（待填）')}${h.model ? `，模型 ${esc(h.model)}` : ''}。<br>密钥还是要<b>你自己粘贴</b>一次（和刚才那个一样就行），只存在这台设备的浏览器里。
+        <div class="lf-wform"><input type="password" class="text_pole lf-wk" placeholder="粘贴密钥">${needModel ? `<input class="text_pole lf-wm" placeholder="模型名：点“拉取模型列表”选，或者自己填"><button class="lf-btn lf-wfetch">拉取模型列表</button>${all.length ? `<div class="lf-wmods lf-wfetched">${modelChips(all)}</div>` : '<div class="lf-wmods lf-wfetched"></div>'}<small class="lf-wdim">小助手用便宜的模型就够了，描边标出来的（带 flash、mini、haiku 的）一般都便宜。</small>` : ''}</div>`);
+    const kIn = d.querySelector('.lf-wk');
+    const mIn = d.querySelector('.lf-wm');
+    d.querySelector('.lf-wfetch')?.addEventListener('click', async () => {
+        const box = d.querySelector('.lf-wfetched');
+        const key = (kIn?.value || '').trim();
+        if (!key) { box.innerHTML = '<small class="lf-wdim">先把密钥粘贴进上面那个框，再拉。</small>'; kIn?.focus(); return; }
+        box.innerHTML = '<small class="lf-wdim">拉取中…</small>';
+        try { box.innerHTML = modelChips(await fetchModels(h, key), mIn?.value || ''); }
+        catch (err) { box.innerHTML = `<small class="lf-wdim">${esc(err?.message || err)}</small>`; }
+        wiz.querySelector('.lf-wlog').scrollTop = 1e9;
+    });
+    d.addEventListener('click', (e) => {
+        const c = e.target.closest('.lf-wmods [data-m]'); if (!c || !mIn) return;
+        mIn.value = c.dataset.m;
+        $$('[data-m]', d).forEach((x) => x.classList.toggle('on', x === c));
+    });
+    const opts = [['保存并测试', async () => {
+        const key = (kIn?.value || '').trim();
+        if (needModel) h.model = (mIn?.value || '').trim();
+        // 填漏了只提醒，不再重新出一份表单
+        if (!key) { wizSay('密钥还没粘贴哦，粘贴进上面那个框再点“保存并测试”。'); kIn?.focus(); return wizOpts(opts); }
+        if (!h.model) { wizSay('模型名还没填，点上面的模型，或者自己填一个，再点“保存并测试”。'); mIn?.focus(); return wizOpts(opts); }
         localStorage.setItem('lf_helper_key', key);
         Object.assign(S().helper, { mode: 'own', protocol: h.protocol, url: h.url, model: h.model }); save(); renderPanel();
         wizSay('测试中…');
         try {
-            const out = await callOwn(S().helper, key, '你是测试助手。', [{ role: 'user', content: '只回复两个字：好的' }], 20);
-            wizSay(`小助手配好了，它回了：「${esc(snip(out, 20))}」。之后在三条杠的“讲解：点哪讲哪”里点“问问它”就能用。`);
+            const out = await callOwn(S().helper, key, '你是酒馆的使用小助手。', [{ role: 'user', content: '你好，请用一句话回复“收到”。' }], 1024);
+            wizSay(out
+                ? `小助手配好了，它回了：「${esc(snip(out, 30))}」。之后在三条杠的“讲解：点哪讲哪”里点“问问它”就能用。`
+                : '小助手配好了：接口能通，不过这次测试它回了空白。会思考的模型、或者中转开了抗截断网关时常这样，真正问问题时一般是正常的。问的时候还空回，再回来换个模型。');
             wizOpts([['下一步：预设', wizPreset, 1]]);
         } catch (err) {
             wizSay(`没测通：${diagnose(err?.message || err)}<br>有些渠道不让网页直接请求，那就改用“酒馆当前连接”。`);
-            wizOpts([['重新填', wizHelperSetup, 1], ['改用酒馆当前连接', () => { S().helper.mode = 'st'; save(); renderPanel(); wizSay('好，改成借用酒馆当前连接了。'); wizOpts([['下一步：预设', wizPreset, 1]]); }], ['先跳过', wizPreset]]);
+            wizOpts([['改一下再试', () => { kIn?.focus(); wizOpts(opts); }, 1], ['改用酒馆当前连接', () => { S().helper.mode = 'st'; save(); renderPanel(); wizSay('好，改成借用酒馆当前连接了。'); wizOpts([['下一步：预设', wizPreset, 1]]); }], ['先跳过', wizPreset]]);
         }
-    }, 1], ['不配了', wizPreset]]);
+    }, 1], ['不配了', wizPreset]];
+    wizOpts(opts);
 }
 
 function presetCount() { return q1('#settings_preset_openai')?.options.length || 0; }
@@ -2003,7 +2145,7 @@ async function wizScript() {
     if (!d) {
         guide(null);
         wizSay('没找到酒馆助手。脚本要先装“酒馆助手”扩展：去社区扩展区找到它的地址，在扩展面板点“安装扩展程序”装上。装好后再来一次就行。');
-        wizOpts([['看安装扩展的图文教程', () => openGuide('ext'), 1], ['知道了', wizAfterScript]]); return;
+        wizOpts([['看安装扩展的图文教程', () => openGuide('ext', 0, 'th'), 1], ['帮我打开安装框', () => fillExtInstall('')], ['知道了', wizAfterScript]]); return;
     }
     await sleep(500);
     const lib = $$('*', d).find((e) => !e.children.length && /^脚本库$/.test(e.textContent.trim()));
@@ -2092,15 +2234,16 @@ function hideFlow() {
     if (n < 4) { wizSay('楼层还太少，不用隐藏。'); return wizOpts([['还想学别的', wizMore, 1], ['结束', wizEnd]]); }
     const def = Math.max(1, n - 20);
     wizSay(`要隐藏到第几楼？建议留最近二三十楼不隐藏，让 AI 接得上。现在一共 ${n} 楼（从 0 开始数）。<div class="lf-wform"><input class="text_pole" id="lf_hideto" type="number" min="0" max="${n - 1}" value="${def - 1}" placeholder="隐藏 0 到第几楼"></div>`);
-    wizOpts([['隐藏', async () => {
-        const to = Math.floor(Number(document.getElementById('lf_hideto')?.value));
-        if (!(to >= 0 && to < n)) { wizSay('楼层数不对，再填一次。'); return hideFlow(); }
+    const opts = [['隐藏', async () => {
+        const to = Math.floor(Number($$('#lf_hideto').pop()?.value));
+        if (!(to >= 0 && to < n)) { wizSay('楼层数不对，改一下上面的数字再点“隐藏”。'); return wizOpts(opts); }
         const run = ctx().executeSlashCommandsWithOptions || ctx().executeSlashCommands;
         if (!run) { wizSay(`这个酒馆版本不能替你执行，在输入框发送 <code>/hide 0-${to}</code> 就行。`); return; }
         await run(`/hide 0-${to}`);
         wizSay(`隐藏好了：0 到 ${to} 楼不会再发给 AI，消息还在，随时能用 <code>/unhide 0-${to}</code> 恢复。消息上的眼睛图标也能单条开关。`);
         wizOpts([['还想学别的', wizMore, 1], ['结束', wizEnd]]);
-    }, 1], ['算了', wizMore]]);
+    }, 1], ['算了', wizMore]];
+    wizOpts(opts);
 }
 
 /* ---------------- 小助手带你做：分步教程 ---------------- */
@@ -2511,7 +2654,7 @@ const FLOWS = {
                 },
                 extra: [['隐藏', async () => {
                     const n = ctx().chat?.length || 0;
-                    const to = Math.floor(Number(document.getElementById('lf_sumhide')?.value));
+                    const to = Math.floor(Number($$('#lf_sumhide').pop()?.value));
                     if (!(to >= 0 && to < n)) { wizSay('楼层数不对，改一下再点。'); return; }
                     const run = ctx().executeSlashCommandsWithOptions || ctx().executeSlashCommands;
                     if (!run) { wizSay(`这个酒馆版本不能替你执行，在输入框发送 <code>/hide 0-${to}</code> 就行。`); return; }
@@ -2645,7 +2788,37 @@ function switchToChinese(resume = '') {
 }
 const isChineseUI = () => /^zh/i.test(document.documentElement.lang || localStorage.getItem('language') || '');
 
-function openGuide(key, start = 0) {
+// 常用扩展的安装地址
+const EXT_LINKS = {
+    fixer: ['Love 修正机（扩展版）', 'https://github.com/ruoege49-ship-it/love-fixer', '不用再靠酒馆助手跑'],
+};
+const isExtVersion = () => window.__loveFixer === 'extension';
+
+// 打开“安装扩展程序”的框，把地址填进去，再把安装按钮框出来
+async function fillExtInstall(url) {
+    openDrawer('#extensions-settings-button');
+    await sleep(450);
+    const btn = q1('#third_party_extension_button');
+    if (!btn) { await copyText(url); say('没找到“安装扩展程序”按钮，地址已经复制好了，手动粘贴就行', 'warning'); return; }
+    realClick(btn);
+    let box = null;
+    for (let k = 0; k < 15 && !box; k++) {
+        await sleep(200);
+        box = $$('dialog[open] textarea, dialog[open] input[type="text"], .popup textarea, #dialogue_popup textarea').find((x) => x.offsetParent !== null);
+    }
+    if (!box) { await copyText(url); say('安装框没弹出来，地址已经复制好了', 'warning'); return; }
+    if (!url) { guide(box); setTimeout(() => guide(null), 9000); box.focus(); say('把社区帖子里复制的地址粘贴进红框，再点“给所有人安装”', 'info'); return; }
+    box.value = url;
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    const dlg = box.closest('dialog, .popup, #dialogue_popup') || document;
+    const go = $$('button, .menu_button, .popup-button-ok, .popup-button-custom', dlg).find((x) => /给所有人安装|install for all/i.test(x.textContent))
+        || $$('button, .menu_button, .popup-button-ok', dlg).find((x) => /只给我安装|install just for me|安装|install/i.test(x.textContent));
+    guide(go || box);
+    setTimeout(() => guide(null), 9000);
+    say('地址填好了，点红框里的安装按钮。弹英文提醒就点 Yes, install it', 'success');
+}
+
+function openGuide(key, start = 0, pick = '') {
     closeOptionsMenu();
     const g = GUIDES[key];
     if (!g) return;
@@ -2655,7 +2828,14 @@ function openGuide(key, start = 0) {
     const draw = () => {
         const [img, t, x, target] = g.pages[i];
         const last = i === g.pages.length - 1;
-        box.innerHTML = `<div class="lf-gd-no">${g.title} · ${i + 1} / ${g.pages.length}</div>
+        const comm = key === 'ext' && pick !== 'fixer' ? `<div class="lf-card lf-gd-links"><div class="lf-cap">地址去社区拿</div><div class="lf-muted">${pick === 'th' ? '<b>酒馆助手</b>' : pick === 'pt' ? '<b>提示词模板</b>' : '酒馆助手、提示词模板这些扩展'}去社区的扩展区下载：在发布帖里复制地址，再照下面的步骤装。帖子里一般还有镜像地址，GitHub 连不上就用镜像。</div>
+            <div class="lf-inline"><button class="lf-btn lf-grow lf-ck-fix" data-fill="">帮我打开安装框</button></div></div>` : '';
+        const links = key === 'ext' && pick === 'fixer' ? `<div class="lf-card lf-gd-links"><div class="lf-cap">修正机扩展版的地址 <small>复制，或者让我帮你填好</small></div>
+            ${Object.entries(EXT_LINKS).map(([k, [n, u, ds]]) => `<div class="lf-gd-link${pick === k ? ' on' : ''}"><span class="lf-shot-t"><b>${esc(n)}${(k === 'th' && findInline(/酒馆助手|tavern ?helper|slash ?runner/i)) || (k === 'pt' && findInline(/提示词模板|prompt ?template/i)) ? '<em>已装</em>' : ''}</b><small>${esc(ds)}</small><code>${esc(u)}</code></span>
+                <span class="lf-gd-lb"><button class="lf-btn" data-copy="${esc(u)}">复制</button><button class="lf-btn lf-ck-fix" data-fill="${esc(u)}">帮我填好</button></span></div>`).join('')}
+            ${pick === 'fixer' ? '<small class="lf-muted">装好扩展版以后，去 扩展 → 酒馆助手 → 脚本库，把「Love 修正机」脚本关掉，再刷新页面。两个只留一个。</small>' : ''}
+        </div>` : '';
+        box.innerHTML = `${i === 0 ? links + comm : ''}<div class="lf-gd-no">${g.title} · ${i + 1} / ${g.pages.length}</div>
             <img class="lf-gd-img" src="${GUIDE_IMG[img]}" alt="${esc(t)}">
             <div class="lf-gd-t">${esc(t)}</div><div class="lf-gd-x">${x}</div>
             ${key === 'lang' && !isChineseUI() ? '<button class="lf-btn lf-gd-zh">直接帮我切成中文</button>' : ''}
@@ -2667,6 +2847,10 @@ function openGuide(key, start = 0) {
         const a = e.target.closest('[data-a]')?.dataset.a;
         const dot = e.target.closest('[data-k]');
         if (dot) { i = Number(dot.dataset.k); return draw(); }
+        const cp = e.target.closest('[data-copy]');
+        if (cp) { const ok = await copyText(cp.dataset.copy); say(ok ? '地址复制好了' : '复制失败了，长按地址手动复制', ok ? 'success' : 'warning'); return; }
+        const fl = e.target.closest('[data-fill]');
+        if (fl) { w.remove(); return fillExtInstall(fl.dataset.fill || ''); }
         if (e.target.closest('.lf-gd-zh')) return switchToChinese();
         if (a === 'prev' && i > 0) { i--; draw(); }
         if (a === 'next') { if (i < g.pages.length - 1) { i++; draw(); } else w.remove(); }
@@ -2861,7 +3045,7 @@ function runChecks() {
         const hasTH = !!findInline(/酒馆助手|tavern ?helper|slash ?runner/i);
         const hasPT = !!findInline(/提示词模板|prompt ?template/i);
         const miss = [need.needTH && !hasTH && '酒馆助手', need.needPT && !hasPT && '提示词模板'].filter(Boolean);
-        if (miss.length) add('bad', `这张卡要用的扩展没装：${miss.join('、')}`, '不装的话聊天里会露出一堆代码（爆代码），界面也出不来。', ['看安装教程', () => { setTimeout(() => openGuide('ext'), 50); return ''; }]);
+        if (miss.length) add('bad', `这张卡要用的扩展没装：${miss.join('、')}`, '不装的话聊天里会露出一堆代码（爆代码），界面也出不来。', ['看安装教程', () => { setTimeout(() => openGuide('ext', 0, miss.includes('酒馆助手') ? 'th' : 'pt'), 50); return ''; }]);
         if (need.regex.length && !allowToggle('regex_scoped_toggle').on) {
             add('bad', '局部正则的允许开关关着', `这张卡带了 ${need.regex.length} 条局部正则（状态栏、美化之类），开关关着全都不生效。`,
                 ['帮我打开', () => (flipAllow('regex_scoped_toggle') ? '打开了，抽一条新回复看看。' : '没打开，去正则面板手动点一下。')]);
@@ -2998,12 +3182,13 @@ function importWarn(ch) {
             const a = e.target.closest('button')?.dataset.a;
             if (!a) return;
             if (a === 'allow') { flipAllow('regex_scoped_toggle'); say(allowToggle('regex_scoped_toggle').on ? '局部正则的允许开关打开了' : '没打开，去正则面板手动点一下', 'info'); }
-            if (a === 'guide') openGuide('ext');
+            if (a === 'guide') openGuide('ext', 0, impBox.dataset.pick || 'th');
             if (a === 'upd') { openWizard('menu'); wizTeach('cardupdate'); }
             impBox.style.display = 'none';
         });
     }
     impBox.innerHTML = `<div class="lf-tip-t">小助手：${same.length && lines.length === 1 ? `你像是在更新「${esc(snip(ch.name, 16))}」` : `「${esc(snip(ch.name, 16))}」带了这些东西`}</div><div class="lf-tip-x">${lines.join('<br>')}</div><div class="lf-tip-b">${scopedOff ? '<button data-a="allow">打开局部正则允许</button>' : ''}${miss.length ? '<button data-a="guide">看安装教程</button>' : ''}${same.length ? '<button data-a="upd">怎么更新卡</button>' : ''}<button data-a="close">知道了</button></div>`;
+    impBox.dataset.pick = miss.includes('酒馆助手') ? 'th' : 'pt';
     impBox.style.display = 'block';
 }
 
@@ -3331,6 +3516,7 @@ let nudgeBox = null;
 /* 自己弹出来的提醒排队：一次只弹一个；向导、弹层开着，AI 正在写，或者已经有气泡时先等着 */
 const nudgeQ = [];
 function busyForNudge() {
+    if (genStart && Date.now() - genStart > 300000) genStart = 0;
     if (wiz || document.querySelector('.lf-mask') || genStart || picking) return true;
     return ['#lf_err', '#lf_imp', '#lf_nudge'].some((sel) => q1(sel)?.style.display === 'block');
 }
@@ -3374,7 +3560,7 @@ function summaryNudge() {
 
 function showVersionNote() {
     S().seenVer = VER; save();
-    showNudge(`Love 修正机更新到 ${VER}`, '· 顶栏多了一个<b>修正机按钮</b>（路线图标），新手引导、帮我查问题、优化设置都在里面<br>· <b>帮我查问题</b>：先自动体检、能一键修，不行再让小助手看屏幕，最后帮你写好提问去答疑<br>· <b>快速优化</b>：手机、电脑各有推荐方案，点一下就换<br>· 导入卡时的安全提醒、聊天超过 10 万 token 提醒做大总结（带教程）',
+    showNudge(`Love 修正机更新到 ${VER}`, '· <b>这次修了</b>：手机端格式面板被挤、小助手配置重复表单、测试空回、讲解点不到开场白、TT 顶栏被挤、加载时误报爆代码；连上 API 后模型能直接点选，小助手能拉取全部模型<br>· 顶栏多了一个<b>修正机按钮</b>（路线图标），新手引导、帮我查问题、优化设置都在里面<br>· <b>帮我查问题</b>：先自动体检、能一键修，不行再让小助手看屏幕，最后帮你写好提问去答疑<br>· <b>快速优化</b>：手机、电脑各有推荐方案，点一下就换<br>· 导入卡时的安全提醒、聊天超过 10 万 token 提醒做大总结（带教程）',
         [['打开看看', openHub], ['知道了', null]]);
 }
 
@@ -3443,7 +3629,7 @@ const START_STEPS = () => [
     ['helper', '配好小助手', '看不懂、报错时能直接问它', () => hasAI(), () => { openWizard('blank'); startHelperSetup(); }, true],
     ['preset', '导入预设', '决定 AI 怎么写：文风、规则、长度', () => !!presetName() && !/^default$/i.test(presetName()), () => { openWizard('blank'); wizPreset(); }, false],
     ['card', '导入角色卡', '一张图片或一个 JSON', () => (ctx().characters || []).some((x) => !/seraphina/i.test(`${x.avatar} ${x.name}`)), () => { openWizard('blank'); wizCard(); }, false],
-    ['script', '装酒馆助手', '很多前端卡、状态栏要用它，不装会爆代码', () => !!findInline(/酒馆助手|tavern ?helper|slash ?runner/i), () => { openWizard('blank'); wizScript(); }, true],
+    ['script', '装酒馆助手', '很多前端卡、状态栏要用它，不装会爆代码；去社区扩展区下载', () => !!findInline(/酒馆助手|tavern ?helper|slash ?runner/i), () => { openWizard('blank'); wizScript(); }, true],
     ['regex', '认识正则', '全局、预设、局部三种，和两个允许开关', () => !!S().learned?.regex, () => { S().learned = { ...(S().learned || {}), regex: true }; save(); openWizard('blank'); runFlow('regex'); }, true],
     ['persona', '写 user 设定', '告诉 AI 你是谁，不写它会乱编', () => !!String(ctx().powerUserSettings?.persona_description || '').trim(), () => { openWizard('blank'); wizTeach('persona'); }, false],
     ['chat', '发出第一句话', '动作用星号，说话用引号', () => (ctx().chat || []).some((m) => m.is_user && !m.is_system), () => { openWizard('blank'); wizTeach('send'); }, false],
@@ -3484,6 +3670,21 @@ function openStart() {
     });
 }
 
+// 顶栏放得下就放顶栏；放不下（比如 TT酒馆的文字顶栏）就改成左边的小悬浮按钮，不挤掉别的按钮
+function topBarOverflow(bar) {
+    if (bar.scrollWidth > bar.clientWidth + 2) return true;
+    return [...bar.children].some((c) => { const r = c.getBoundingClientRect(); return r.width > 0 && (r.left < -2 || r.right > innerWidth + 2); });
+}
+function placeStartBtn(b) {
+    const bar = document.getElementById('top-settings-holder');
+    const float = () => { b.classList.add('lf-float'); if (b.parentElement !== document.body) document.body.appendChild(b); };
+    if (!bar) return float();
+    b.classList.remove('lf-float');
+    const right = document.getElementById('rightNavHolder');
+    if (right && right.parentElement === bar) bar.insertBefore(b, right); else bar.appendChild(b);
+    if (topBarOverflow(bar)) float();
+}
+
 function mountStartBtn() {
     let b = document.getElementById('lf_start_btn');
     if (!on('ui_start_btn')) { b?.remove(); return; }
@@ -3493,11 +3694,8 @@ function mountStartBtn() {
         b.title = 'Love 修正机：所有功能和新手引导';
         b.innerHTML = '<div class="drawer-icon fa-solid fa-route fa-fw interactable" tabindex="0"></div><span class="lf-dot"></span>';
         b.addEventListener('click', (e) => { e.stopPropagation(); openHub(); });
-        const bar = document.getElementById('top-settings-holder');
-        const right = document.getElementById('rightNavHolder');
-        if (bar && right && right.parentElement === bar) bar.insertBefore(b, right);
-        else if (bar) bar.appendChild(b);
-        else { b.classList.add('lf-float'); document.body.appendChild(b); }
+        placeStartBtn(b);
+        if (!placeStartBtn.bound) { placeStartBtn.bound = true; let t = 0; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { const x = document.getElementById('lf_start_btn'); if (x) placeStartBtn(x); }, 400); }); }
     }
     try { b.classList.toggle('todo', startProgress().mustLeft > 0); } catch { /* */ }
 }
@@ -3616,6 +3814,8 @@ jQuery(async () => {
     eventSource.on(E.CHAT_CHANGED, () => { scheduleTokCount(2500); bindDraft(); restoreDraft(); applyAvatarOverride(); renderAllWaits(); hideTip(); setTimeout(checkCodeLeak, 1500); });
     eventSource.on(E.MESSAGE_SENT, () => localStorage.removeItem(draftKey()));
     eventSource.on(E.GENERATION_STARTED, onGenStarted);
+    // 生成失败或被停止时也把“正在写”清掉，不然爆代码检测和提醒会一直等
+    [E.GENERATION_ENDED, E.GENERATION_STOPPED].filter(Boolean).forEach((ev) => eventSource.on(ev, () => setTimeout(() => { genStart = 0; }, 1500)));
     eventSource.on(E.MESSAGE_RECEIVED, (id) => { onMessageReceived(id); scheduleTokCount(); });
     eventSource.on(E.CHARACTER_MESSAGE_RENDERED, (id) => { renderWait(id); applyAvatarOverride(); setTimeout(checkCodeLeak, 800); });
     if (E.MORE_MESSAGES_LOADED) eventSource.on(E.MORE_MESSAGES_LOADED, () => { applyAvatarOverride(); renderAllWaits(); });
