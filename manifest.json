@@ -1,0 +1,12 @@
+{
+    "display_name": "Love 修正机",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "if love",
+    "version": "1.1.0",
+    "homePage": "https://github.com/ruoege49-ship-it/love-fixer",
+    "auto_update": true
+}
