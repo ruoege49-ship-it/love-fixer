@@ -324,7 +324,7 @@ function panelHtml(kind = 'ext') {
                     <label>格式<select class="text_pole lf-h" data-h="protocol"><option value="openai"${h.protocol === 'openai' ? ' selected' : ''}>OpenAI 兼容</option><option value="anthropic"${h.protocol === 'anthropic' ? ' selected' : ''}>Anthropic</option></select></label>
                     <label>地址<input class="text_pole lf-h" data-h="url" value="${esc(h.url)}" placeholder="https://你的接口/v1"></label>
                     <label>模型<input class="text_pole lf-h" data-h="model" value="${esc(h.model)}" placeholder="填模型名"></label>
-                    <label>密钥<input class="text_pole lf-key" type="password" value="${esc(localStorage.getItem('lf_helper_key') || '')}" placeholder="只存在这台设备的浏览器里"></label>
+                    <label>密钥<input class="text_pole lf-key" type="password" value="${esc(localStorage.getItem('lf_helper_key') || '')}" placeholder="保存在本机，用于请求所选接口"></label>
                 </div>
                 <label>答疑链接<input class="text_pole lf-h" data-h="desk" value="${esc(h.desk)}" placeholder="「新手答疑」频道链接，填了就能一键跳过去"></label>
                 <div class="lf-attach"><span>提问时附带</span>
@@ -943,9 +943,9 @@ let helperOn = false; let helperBypass = false; let tipHit = null;
 let frameEl; let tipEl; let badgeEl;
 
 const MARK = {
-    main: '预设作者写的总规矩：AI 扮演谁、怎么写、哪些不能写。排在最前，AI 把它当“法律”；但离最新消息最远，聊久了会被冲淡，所以重要规则常在尾部再强调一次。',
+    main: '预设作者写的总规矩：AI 扮演谁、怎么写、哪些不能写。破限一般也放在预设最上面这一块。排在最前，AI 把它当“法律”；但离最新消息最远，聊久了会被冲淡，所以重要规则常在尾部再强调一次。',
     nsfw: '辅助提示词槽位，酒馆固定的一个位置，很多预设拿它放额外规则，具体内容看预设作者写了什么。',
-    jailbreak: '后置指令（俗称破限位）：排在聊天历史后面，是 AI 开口前最后看到的规矩之一，用来压住前面被冲淡的规则，也最容易和别的条目打架。',
+    jailbreak: '后置指令：排在聊天历史后面，是 AI 开口前最后看到的规矩之一，用来压住前面被冲淡的规则，也最容易和别的条目打架。（破限不在这里，破限一般放在预设最上面。）',
     enhanceDefinitions: '增强定义：让 AI 调用自己对知名角色的了解来补全设定，原创卡一般用不上。',
     worldInfoBefore: '世界书（角色定义之前）：酒馆固定位。所有设成“角色定义之前”的世界书条目都塞到这里，先给舞台再给演员。蓝灯条目每次都在，绿灯条目要聊天里出现关键词才进来。',
     worldInfoAfter: '世界书（角色定义之后）：紧贴角色定义，AI 会把这里当成角色的补充来读，适合关系网、隐藏设定。',
@@ -986,7 +986,7 @@ function explainPrompt(li) {
     else if (p?.role === 'assistant') lines.push('以 AI 的身份发送：AI 会把这段当成“自己说过的话”。');
     if (p?.content && !p.marker) lines.push('内容开头：' + esc(snip(p.content, 70)));
     const tags = [isOn && idx >= 0 ? `第 ${idx + 1} / ${enabled.length} 条` : '未启用，不会发送', '发送身份 ' + role, abs ? `深度 D${depth}` : (MARK[id] ? '酒馆固定位' : '相对位置')];
-    const SL = { main: '主提示', jailbreak: '破限位、JB', nsfw: 'NSFW 位', worldInfoBefore: '世界书', worldInfoAfter: '世界书', chatHistory: '上下文、聊天记录', dialogueExamples: '示例对话', personaDescription: 'user 人设、Persona', charDescription: '卡' };
+    const SL = { main: '主提示', jailbreak: '后置指令', nsfw: 'NSFW 位', worldInfoBefore: '世界书', worldInfoAfter: '世界书', chatHistory: '上下文、聊天记录', dialogueExamples: '示例对话', personaDescription: 'user 人设、Persona', charDescription: '卡' };
     let slang = SL[id] || (abs ? `D${depth}、深度注入` : '');
     if (p?.role === 'assistant' && idx === enabled.length - 1 && idx >= 0) slang = '预填、prefill';
     return {
@@ -1065,15 +1065,15 @@ function explainControl(el) {
 const GLOSSARY = [
     ['酒馆', 'ST、SillyTavern', '就是 SillyTavern 本体，一个连 AI 玩角色扮演的前端。'],
     ['卡', '角色卡', '一张 PNG 或 JSON，存角色设定和开场白，可能还自带世界书和正则。'],
-    ['人设卡 / 世界卡 / 多人卡', '', '人设卡写一个角色；世界卡写一个世界，AI 当旁白；多人卡是一张卡里有好几个角色，各个角色的设定放在世界书里，聊到谁就把谁的条目发给 AI。'],
-    ['多人卡', '', '一张卡里有好几个角色。角色设定一般放在卡自带的世界书里，每个角色一条，聊天里提到谁就触发谁的条目。所以导入多人卡时，一定要选“导入卡内世界书”。'],
+    ['人设卡 / 世界卡 / 多人卡', '', '人设卡写一个角色；世界卡写一个世界，AI 当旁白；多人卡是一张卡里有好几个角色，各个角色的设定放在世界书里：绿灯的角色条目要聊天里提到才发，蓝灯的每次都发。'],
+    ['多人卡', '', '一张卡里有好几个角色。角色设定一般放在卡自带的世界书里，每个角色一条。这些条目是绿灯的话，聊天里提到这个角色才会发给 AI；是蓝灯的话，每次都会发。所以导入多人卡时，一定要选“导入卡内世界书”。'],
     ['同人卡', '', '基于已有作品的卡。'],
     ['手枪卡', '', '以成人内容为主的卡。'],
     ['前端卡', '美化卡', '自带网页界面的卡，靠正则或酒馆助手把文字渲染成界面，状态栏、开场白主页都算。'],
     ['开场白', '首条、0 楼', '卡的第一条消息。“开场白主页”是可以点按钮选开局的前端界面。'],
     ['写卡', '搓卡、捏卡', '自己写角色卡。'],
     ['预设', '', '一整套发给 AI 的规矩加参数：文风、规则、长度、温度。'],
-    ['破限', 'JB、越狱', '让模型少拒绝、放开写的提示词。“破限位”就是预设里的后置指令那一格。'],
+    ['破限', 'JB、越狱', '让模型少拒绝、放开写的提示词，一般放在预设最上面。'],
     ['预填', '预填充、prefill', '替 AI 写好回复开头，AI 会顺着往下写。注意 Gemini 3.1 Pro，还有 3.5 Flash 之后出的哈基米（3.6 Flash 起），都不适配预填了；3.5 Flash 本身还能用。'],
     ['双惩罚', '频率惩罚、存在惩罚', '两个治复读的参数。哈基米从 Gemini 2.5 起就不支持了，调了也没用，放 0 就行。'],
     ['思维链', 'COT、思考', '让 AI 先打草稿、想清楚再写正文。'],
@@ -1759,7 +1759,7 @@ function wizUrlCheck() {
 function wizKey(acts) {
     const ch = wizCh;
     guide(q1(ch.key));
-    wizSay('密钥要你<b>自己填</b>，我不会碰，也看不到。填进红框里，填好点“我填好了”，我帮你点连接。<br><span class="lf-wdim">提醒：密钥相当于密码，别发给任何人；分享截图前把密钥遮住。中转地址不用遮，去答疑提问时别人要看它对不对。</span>', acts);
+    wizSay('密钥要你<b>自己填</b>，我只检查红框里是否已填写，不保存这处的密钥内容。填好点“我填好了”，我帮你点连接。<br><span class="lf-wdim">提醒：密钥相当于密码，别发给任何人；分享截图前把密钥遮住。中转地址不用遮，去答疑提问时别人要看它对不对。</span>', acts);
     wizOpts([['我填好了', wizConnect, 1], ['密钥去哪拿？', () => { wizSay(ch.where + '密钥相当于账号密码，别发给任何人。'); wizOpts([['我填好了', wizConnect, 1]]); }]]);
 }
 
@@ -1903,7 +1903,7 @@ function wizHelperSetup() {
     const h = { ...(ch.helper || { protocol: 'openai', url: '', model: '' }) };
     if (ch.src === 'custom' && !ch.fixedUrl) h.url = (q1(ch.url)?.value || '').trim();
     const needModel = !h.model;
-    wizSay(`我先帮你填好：格式 ${h.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI 兼容'}，地址 ${esc(h.url || '（待填）')}${h.model ? `，模型 ${esc(h.model)}` : ''}。<br>密钥还是要<b>你自己粘贴</b>一次（和刚才那个一样就行），只存在这台设备的浏览器里。
+    wizSay(`我先帮你填好：格式 ${h.protocol === 'anthropic' ? 'Anthropic' : 'OpenAI 兼容'}，地址 ${esc(h.url || '（待填）')}${h.model ? `，模型 ${esc(h.model)}` : ''}。<br>密钥还是要<b>你自己粘贴</b>一次（和刚才那个一样就行），会保存在本机浏览器，并用于请求选定的 AI 接口。
         <div class="lf-wform"><input type="password" class="text_pole" id="lf_wk" placeholder="粘贴密钥">${needModel ? '<input class="text_pole" id="lf_wm" placeholder="填一个便宜的模型名，带 mini、flash、haiku 的一般都便宜">' : ''}</div>`);
     wizOpts([['保存并测试', async () => {
         const key = (document.getElementById('lf_wk')?.value || '').trim();
@@ -2631,7 +2631,7 @@ const GUIDES = {
         pages: [
             ['step1', '点顶栏的“扩展程序”', '积木形状的图标，所有扩展都住在这里。', '#extensions-settings-button > .drawer-toggle', ''],
             ['step2', '点“安装扩展程序”', '扩展面板最上面那排按钮里，带云朵下载箭头的那个。', '#third_party_extension_button', '#extensions-settings-button'],
-            ['step3', '粘贴地址，点“只给我安装”', '把扩展的 Git 地址粘进输入框，一般是从社区帖子里复制的 GitHub 链接。下面的“分支或标签名”不用填。管理员会多一个“给所有人安装”。GitHub 连不上，就用帖子里给的镜像地址。', '', ''],
+            ['step3', '粘贴地址，点“给所有人安装”', '把扩展的 Git 地址粘进输入框，一般是从社区帖子里复制的 GitHub 链接。下面的“分支或标签名”不用填。点“给所有人安装”；没有这个按钮的话，点“只给我安装”也一样。GitHub 连不上，就用帖子里给的镜像地址。', '', ''],
             ['step4', '第三方提醒：点“Yes, install it”', '不是官方扩展会弹这个英文提醒，意思是“第三方扩展可能有风险，确定要装吗”。确认来源可信就点 Yes。勾上“Don\'t show this warning again”，以后就不再问。', '', ''],
             ['step5', '看到“扩展程序安装成功”就好了', '新版酒馆会自动加载，老版本刷新一下页面。装好的扩展出现在扩展面板里，点它的标题展开设置。<br>实在装不上：把扩展下载成 zip，解压后整个文件夹放进 <code>SillyTavern/data/default-user/extensions/</code>，再重启酒馆。', '', ''],
         ],
